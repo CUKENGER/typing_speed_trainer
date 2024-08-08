@@ -4,7 +4,6 @@ import InputField from "../components/InputField";
 import Results from "../components/Results";
 import useTypingTest from "../hooks/useTypingTest";
 
-// Массив текстов для выбора
 const texts = [
   `the quick brown fox jumps over the lazy dog repeatedly without ever stopping to rest or slow down it continues to leap across the vast open field as the sun sets in the distance casting long shadows on the ground`,
   `a journey of a thousand miles begins with a single step each step you take brings you closer to your destination and though the path may be long and winding persistence will ultimately lead you to your goal`,
@@ -44,7 +43,7 @@ const Home = () => {
     inputRef,
     handleInputChange,
     resetTest,
-  } = useTypingTest(texts, selectedTime || 30, !!selectedTime); // Передаем состояние выбора времени
+  } = useTypingTest(texts, selectedTime, !!selectedTime); // Передаем состояние выбора времени
 
   const handleRestart = () => {
     setSelectedTime(null); // Сбрасываем выбор времени
@@ -66,7 +65,7 @@ const Home = () => {
             inputRef={inputRef}
             isDisabled={isCompleted}
           />
-          <p>{Math.round(time)}</p>
+          <p>Оставшееся время: {Math.max(time, 0)}</p>
           {isCompleted && (
             <Results
               wpm={wpm}

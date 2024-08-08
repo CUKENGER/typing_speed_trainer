@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef } from "react";
 
-const useTypingTest = (texts, initialTime = 30, isTimeSelected) => {
+const useTypingTest = (texts, initialTime, isTimeSelected) => {
   const [input, setInput] = useState("");
   const [currentText, setCurrentText] = useState(texts[0]);
   const [isCompleted, setIsCompleted] = useState(false);
@@ -11,36 +11,48 @@ const useTypingTest = (texts, initialTime = 30, isTimeSelected) => {
   const inputRef = useRef(null);
 
   useEffect(() => {
-    if (inputRef.current && isTimeSelected) {
-      inputRef.current.focus(); // Устанавливаем фокус на поле ввода при загрузке
-    }
-  }, [isCompleted, isTimeSelected]);
+    setTime(initialTime)
+  }, [initialTime])
 
+  // Устанавливаем фокус на поле ввода при загрузке
   useEffect(() => {
-    if (startTime) {
+    if (inputRef.current && isTimeSelected) {
+      inputRef.current.focus();
+    }
+  }, [isTimeSelected]);
+
+  // Обновляем таймер
+  useEffect(() => {
+    if (startTime && !isCompleted) {
       const interval = setInterval(() => {
-        setTime((prev) => prev - 1);
-        if (Date.now() - startTime >= initialTime * 1000) {
-          completeTest();
-          clearInterval(interval);
-        }
+        setTime((prev) => {
+          const newTime = prev - 1;
+          if (newTime <= 0) {
+            clearInterval(interval);
+            completeTest();
+            return 0;
+          }
+          return newTime;
+        });
       }, 1000);
 
       return () => clearInterval(interval);
     }
-  }, [startTime]);
+  }, [startTime, isCompleted]);
 
+  // Обновляем ошибки и WPM
   useEffect(() => {
     if (isCompleted) {
       if (inputRef.current) inputRef.current.blur();
       const wordsTyped = input.trim().split(/\s+/).length;
-      setWpm(Math.round((wordsTyped / initialTime) * 60));
+      setWpm(Math.round((wordsTyped / (initialTime || 1)) * 60)); // Предотвращаем деление на ноль
       setErrors(input.split("").filter((char, index) => char !== currentText[index]).length);
     } else {
       setErrors(input.split("").filter((char, index) => char !== currentText[index]).length);
     }
-  }, [input, isCompleted]);
+  }, [input, isCompleted, currentText, initialTime]);
 
+  // Проверка на завершение теста
   useEffect(() => {
     if (input.length === currentText.length) completeTest();
   }, [input, currentText]);
@@ -56,14 +68,17 @@ const useTypingTest = (texts, initialTime = 30, isTimeSelected) => {
     setIsCompleted(false);
     setTime(initialTime);
     setCurrentText(texts[Math.floor(Math.random() * texts.length)]);
-    if (inputRef.current && isTimeSelected) {
-      inputRef.current.focus();
-    }
+    if (inputRef.current) inputRef.current.focus();
   };
 
   const handleInputChange = (value) => {
     if (!startTime) setStartTime(Date.now());
-    if (isCompleted || !isTimeSelected) return; // Не обрабатывать ввод, если время не выбрано
+    if (isCompleted) return;
+
+    const lastChar = value[value.length - 1];
+    const upcomingChar = currentText[input.length];
+
+    if (lastChar === " " && upcomingChar !== " ") return;
 
     if (value.length < input.length) {
       const lastInputSpace = input.lastIndexOf(' ') + 1;
@@ -71,13 +86,10 @@ const useTypingTest = (texts, initialTime = 30, isTimeSelected) => {
 
       if (lastValueSpace >= lastInputSpace) {
         setInput(value);
+      } else {
+        setInput(input.slice(0, lastInputSpace));
       }
     } else {
-      const lastChar = value[value.length - 1];
-      const upcomingChar = currentText[input.length];
-
-      if (lastChar === " " && upcomingChar !== " ") return;
-
       setInput(value);
     }
   };

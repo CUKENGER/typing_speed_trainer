@@ -1,6 +1,6 @@
 import { useState, useEffect, useRef } from "react";
 
-const useTypingTest = (texts, initialTime = 30) => {
+const useTypingTest = (texts, initialTime = 30, isTimeSelected) => {
   const [input, setInput] = useState("");
   const [currentText, setCurrentText] = useState(texts[0]);
   const [isCompleted, setIsCompleted] = useState(false);
@@ -11,10 +11,10 @@ const useTypingTest = (texts, initialTime = 30) => {
   const inputRef = useRef(null);
 
   useEffect(() => {
-    if (inputRef.current) {
+    if (inputRef.current && isTimeSelected) {
       inputRef.current.focus(); // Устанавливаем фокус на поле ввода при загрузке
     }
-  }, [isCompleted]); // Обновляем фокус при сбросе теста
+  }, [isCompleted, isTimeSelected]);
 
   useEffect(() => {
     if (startTime) {
@@ -56,20 +56,19 @@ const useTypingTest = (texts, initialTime = 30) => {
     setIsCompleted(false);
     setTime(initialTime);
     setCurrentText(texts[Math.floor(Math.random() * texts.length)]);
-    if (inputRef.current) inputRef.current.focus();
+    if (inputRef.current && isTimeSelected) {
+      inputRef.current.focus();
+    }
   };
 
   const handleInputChange = (value) => {
     if (!startTime) setStartTime(Date.now());
-    if (isCompleted) return;
+    if (isCompleted || !isTimeSelected) return; // Не обрабатывать ввод, если время не выбрано
 
-    // Если пользователь удаляет символы (value.length < input.length)
     if (value.length < input.length) {
-      // Проверка, если удаление происходит внутри текущего слова
-      const lastInputSpace = input.lastIndexOf(' ') + 1; // индекс последнего пробела в предыдущем input
-      const lastValueSpace = value.lastIndexOf(' ') + 1; // индекс последнего пробела в текущем input
+      const lastInputSpace = input.lastIndexOf(' ') + 1;
+      const lastValueSpace = value.lastIndexOf(' ') + 1;
 
-      // Если удаление происходит внутри текущего слова
       if (lastValueSpace >= lastInputSpace) {
         setInput(value);
       }
@@ -77,7 +76,6 @@ const useTypingTest = (texts, initialTime = 30) => {
       const lastChar = value[value.length - 1];
       const upcomingChar = currentText[input.length];
 
-      // Проверка на правильность ввода пробела
       if (lastChar === " " && upcomingChar !== " ") return;
 
       setInput(value);

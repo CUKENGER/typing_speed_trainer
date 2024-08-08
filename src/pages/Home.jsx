@@ -1,4 +1,4 @@
-import React from "react";
+import React, { useState } from "react";
 import TypingText from "../components/TypingText";
 import InputField from "../components/InputField";
 import Results from "../components/Results";
@@ -13,7 +13,27 @@ const texts = [
   `practice makes perfect so keep on typing even when your fingers are tired or your mind starts to wander the more you practice the faster and more accurate you will become improving your skills every day`
 ];
 
+const TimeSelector = ({ setSelectedTime }) => {
+  const times = [30, 60, 120]; // Варианты времени (в секундах)
+
+  return (
+    <div className="time-selector">
+      <label>Выберите время: </label>
+      {times.map((time) => (
+        <button 
+          key={time} 
+          onClick={() => setSelectedTime(time)} 
+          className="px-[12px] py-[7px] bg-slate-700 rounded-lg m-1"
+        >
+          {time} секунд
+        </button>
+      ))}
+    </div>
+  );
+};
+
 const Home = () => {
+  const [selectedTime, setSelectedTime] = useState(null); // Начальное состояние времени
   const {
     input,
     currentText,
@@ -24,34 +44,44 @@ const Home = () => {
     inputRef,
     handleInputChange,
     resetTest,
-  } = useTypingTest(texts);
+  } = useTypingTest(texts, selectedTime || 30, !!selectedTime); // Передаем состояние выбора времени
+
+  const handleRestart = () => {
+    setSelectedTime(null); // Сбрасываем выбор времени
+    resetTest(); // Сбрасываем тест
+  };
 
   return (
     <div className="flex flex-col items-center gap-y-[50px]">
       <h1>Typing Speed Trainer</h1>
-      <TypingText 
-        text={currentText} 
-        input={input} 
-      />
-      <InputField 
-        value={input} 
-        onChange={(e) => handleInputChange(e.target.value)} 
-        inputRef={inputRef} 
-        isDisabled={isCompleted} 
-      />
-      <p>{Math.round(time)}</p>
-      {isCompleted && (
-        <Results 
-          wpm={wpm} 
-          errors={errors} 
-          resetGame={resetTest} 
-        />)}
-      <button 
-        className="px-[12px] py-[7px] bg-slate-700 rounded-lg" 
-        onClick={resetTest}
-      >
-        Restart
-      </button>
+      {!selectedTime ? (
+        <TimeSelector setSelectedTime={setSelectedTime} />
+      ) : (
+        <>
+          <p>Выбранное время: {selectedTime} секунд</p>
+          <TypingText text={currentText} input={input} />
+          <InputField
+            value={input}
+            onChange={(e) => handleInputChange(e.target.value)}
+            inputRef={inputRef}
+            isDisabled={isCompleted}
+          />
+          <p>{Math.round(time)}</p>
+          {isCompleted && (
+            <Results
+              wpm={wpm}
+              errors={errors}
+              resetGame={handleRestart} // Обновляем обработчик сброса
+            />
+          )}
+          <button
+            className="px-[12px] py-[7px] bg-slate-700 rounded-lg"
+            onClick={handleRestart} // Используем обновленный обработчик сброса
+          >
+            Restart
+          </button>
+        </>
+      )}
     </div>
   );
 };

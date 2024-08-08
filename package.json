@@ -1,6 +1,7 @@
 {
   "name": "typing_speed_trainer",
   "version": "0.1.0",
+  "homepage": "https://cukenger.github.io/typing_speed_trainer",
   "private": true,
   "dependencies": {
     "@testing-library/user-event": "^13.5.0",
